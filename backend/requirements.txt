@@ -1,6 +1,7 @@
 fastapi==0.136.1
 python-jose[cryptography]
-passlib[bcrypt]
+passlib==1.7.4
+bcrypt==3.2.2
 pydantic==2.13.4
 python-dotenv==1.2.2
 Requests==2.34.2
