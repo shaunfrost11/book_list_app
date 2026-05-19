@@ -106,30 +106,38 @@ def register_user(user: UserAuth):
 
 @app.post("/login")
 def login_user(user: UserAuth):
+    print(f"🔥 DEBUG: Reached /login endpoint for email: {user.email}") # Track 1
+    
     conn = get_db_connection()
     if not conn:
+        print("🔥 DEBUG: get_db_connection() returned None!") # Track 2
         raise HTTPException(status_code=500, detail="Database connection failed")
     
-    # Use RealDictCursor so we can access columns by name (e.g., db_user['password_hash'])
+    print("🔥 DEBUG: Database connected successfully!") # Track 3
+    
     cursor = conn.cursor(cursor_factory=RealDictCursor)
     try:
-        # 1. Find the user
         cursor.execute("SELECT user_id, password_hash FROM users WHERE email = %s;", (user.email,))
         db_user = cursor.fetchone()
         
-        # 2. Verify user exists and password matches
+        print(f"🔥 DEBUG: Database lookup complete. User found? {bool(db_user)}") # Track 4
+        
         if not db_user or not verify_password(user.password, db_user['password_hash']):
+            print("🔥 DEBUG: Password verification failed!") # Track 5
             raise HTTPException(status_code=401, detail="Invalid email or password")
         
-        # 3. Create the JWT Token
         access_token = create_access_token(data={"sub": str(db_user['user_id'])})
+        print("🔥 DEBUG: Login fully successful, returning token!") # Track 6
         
         return {"access_token": access_token, "token_type": "bearer"}
         
+    except Exception as e:
+        print(f"🔥 DEBUG: FATAL CRASH inside try block: {str(e)}") # Track 7
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         cursor.close()
         conn.close()
-
+        
 @app.get("/search")
 def search_books(q: str):
     url = f"https://openlibrary.org/search.json?title={q}&limit=10"
